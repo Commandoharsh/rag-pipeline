@@ -1,81 +1,104 @@
-@'
 import { useEffect, useState } from "react";
 import {
     FileText,
     RefreshCw,
-    Database,
+    Upload,
+    CheckCircle,
+    Clock,
+    XCircle,
 } from "lucide-react";
 
 import DocumentUploader from "../components/DocumentUploader";
 import { getDocuments } from "../api/documents";
 
+function formatBytes(bytes) {
+    if (!bytes) {
+        return "0 B";
+    }
+
+    const units = [
+        "B",
+        "KB",
+        "MB",
+        "GB",
+    ];
+
+    const index = Math.floor(
+        Math.log(bytes) / Math.log(1024)
+    );
+
+    return `${(
+        bytes /
+        Math.pow(1024, index)
+    ).toFixed(1)} ${units[index]}`;
+}
+
+function formatDate(date) {
+    if (!date) {
+        return "-";
+    }
+
+    return new Date(date).toLocaleString();
+}
+
+function StatusBadge({ status }) {
+    if (status === "indexed") {
+        return (
+            <span className="document-status indexed">
+                <CheckCircle size={14} />
+                Indexed
+            </span>
+        );
+    }
+
+    if (status === "indexing") {
+        return (
+            <span className="document-status indexing">
+                <Clock size={14} />
+                Indexing
+            </span>
+        );
+    }
+
+    if (status === "failed") {
+        return (
+            <span className="document-status failed">
+                <XCircle size={14} />
+                Failed
+            </span>
+        );
+    }
+
+    return (
+        <span className="document-status">
+            {status || "Unknown"}
+        </span>
+    );
+}
+
 function Documents() {
-
-    const [
-        documents,
-        setDocuments
-    ] = useState([]);
-
-    const [
-        loading,
-        setLoading
-    ] = useState(true);
-
-    const [
-        error,
-        setError
-    ] = useState("");
+    const [documents, setDocuments] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
     async function loadDocuments() {
-
-        setLoading(true);
-        setError("");
-
         try {
+            setLoading(true);
+            setError("");
 
-            const data =
-                await getDocuments();
+            const data = await getDocuments();
 
-            /*
-             * The backend may return either:
-             *
-             * [
-             *   {...},
-             *   {...}
-             * ]
-             *
-             * or:
-             *
-             * {
-             *   "documents": [...]
-             * }
-             */
-
-            if (Array.isArray(data)) {
-
-                setDocuments(data);
-
-            } else {
-
-                setDocuments(
-                    data.documents || []
-                );
-            }
-
-        } catch (error) {
-
-            console.error(
-                "Failed to load documents:",
-                error
+            setDocuments(
+                data.documents || data || []
             );
+        } catch (error) {
+            console.error(error);
 
             setError(
                 error.response?.data?.detail ||
                 "Failed to load documents."
             );
-
         } finally {
-
             setLoading(false);
         }
     }
@@ -84,89 +107,16 @@ function Documents() {
         loadDocuments();
     }, []);
 
-    function handleUploaded() {
-        loadDocuments();
-    }
-
-    function getStatusClass(status) {
-
-        switch (
-            status?.toLowerCase()
-        ) {
-
-            case "indexed":
-                return "status-indexed";
-
-            case "indexing":
-                return "status-indexing";
-
-            case "failed":
-                return "status-failed";
-
-            default:
-                return "status-default";
-        }
-    }
-
-    function formatFileSize(bytes) {
-
-        if (!bytes) {
-            return "0 MB";
-        }
-
-        if (
-            bytes <
-            1024 * 1024
-        ) {
-            return (
-                `${(
-                    bytes / 1024
-                ).toFixed(1)} KB`
-            );
-        }
-
-        return (
-            `${(
-                bytes /
-                (1024 * 1024)
-            ).toFixed(2)} MB`
-        );
-    }
-
-    function formatDate(date) {
-
-        if (!date) {
-            return "—";
-        }
-
-        try {
-
-            return new Date(
-                date
-            ).toLocaleString();
-
-        } catch {
-
-            return date;
-        }
-    }
-
     return (
         <div className="documents-page">
-
             <div className="documents-header">
-
                 <div>
-
-                    <h1>
-                        Research Documents
-                    </h1>
+                    <h1>Documents</h1>
 
                     <p>
-                        Manage the documents
-                        available to ResearchRAG.
+                        Manage your indexed research
+                        documents.
                     </p>
-
                 </div>
 
                 <button
@@ -176,202 +126,136 @@ function Documents() {
                 >
                     <RefreshCw
                         size={17}
+                        className={
+                            loading
+                                ? "spin"
+                                : ""
+                        }
                     />
 
                     Refresh
                 </button>
-
             </div>
 
             <DocumentUploader
-                onUploaded={
-                    handleUploaded
-                }
+                onUploaded={loadDocuments}
             />
 
-            <div className="documents-section">
-
-                <div className="section-title">
-
-                    <div>
-                        <Database
-                            size={20}
-                        />
-
-                        <h2>
-                            Indexed Documents
-                        </h2>
-                    </div>
-
-                    <span>
-                        {documents.length}
-                    </span>
-
+            {error && (
+                <div className="document-error">
+                    {error}
                 </div>
+            )}
 
-                {loading && (
-
-                    <div className="documents-loading">
+            <div className="documents-card">
+                {loading ? (
+                    <div className="documents-empty">
                         Loading documents...
                     </div>
-
-                )}
-
-                {error && (
-
-                    <div className="documents-error">
-                        {error}
-                    </div>
-
-                )}
-
-                {!loading &&
-                    !error &&
-                    documents.length === 0 && (
-
+                ) : documents.length === 0 ? (
                     <div className="documents-empty">
-
-                        <FileText
-                            size={40}
-                        />
+                        <FileText size={40} />
 
                         <h3>
                             No documents yet
                         </h3>
 
                         <p>
-                            Upload a PDF to build
-                            your research knowledge
-                            base.
+                            Upload a PDF to start
+                            building your research
+                            knowledge base.
                         </p>
-
                     </div>
+                ) : (
+                    <div className="documents-table-wrapper">
+                        <table className="documents-table">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        Document
+                                    </th>
+                                    <th>
+                                        Type
+                                    </th>
+                                    <th>
+                                        Size
+                                    </th>
+                                    <th>
+                                        Chunks
+                                    </th>
+                                    <th>
+                                        Status
+                                    </th>
+                                    <th>
+                                        Updated
+                                    </th>
+                                </tr>
+                            </thead>
 
-                )}
-
-                {!loading &&
-                    documents.length > 0 && (
-
-                    <div className="document-table">
-
-                        <div className="document-row document-header-row">
-
-                            <span>
-                                Document
-                            </span>
-
-                            <span>
-                                Type
-                            </span>
-
-                            <span>
-                                Size
-                            </span>
-
-                            <span>
-                                Chunks
-                            </span>
-
-                            <span>
-                                Status
-                            </span>
-
-                            <span>
-                                Updated
-                            </span>
-
-                        </div>
-
-                        {documents.map(
-                            (document) => (
-
-                            <div
-                                className="document-row"
-                                key={document.id}
-                            >
-
-                                <div className="document-name">
-
-                                    <FileText
-                                        size={19}
-                                    />
-
-                                    <div>
-
-                                        <strong>
-                                            {
-                                                document.filename
-                                            }
-                                        </strong>
-
-                                        <small>
-                                            {
+                            <tbody>
+                                {documents.map(
+                                    (document) => (
+                                        <tr
+                                            key={
                                                 document.id
                                             }
-                                        </small>
+                                        >
+                                            <td>
+                                                <div className="document-name">
+                                                    <FileText
+                                                        size={
+                                                            18
+                                                        }
+                                                    />
 
-                                    </div>
+                                                    <span>
+                                                        {
+                                                            document.filename
+                                                        }
+                                                    </span>
+                                                </div>
+                                            </td>
 
-                                </div>
+                                            <td>
+                                                {document.file_type ||
+                                                    "PDF"}
+                                            </td>
 
-                                <span>
-                                    {
-                                        document.file_type ||
-                                        "pdf"
-                                    }
-                                </span>
+                                            <td>
+                                                {formatBytes(
+                                                    document.file_size
+                                                )}
+                                            </td>
 
-                                <span>
-                                    {formatFileSize(
-                                        document.file_size
-                                    )}
-                                </span>
+                                            <td>
+                                                {
+                                                    document.chunk_count
+                                                }
+                                            </td>
 
-                                <span>
-                                    {
-                                        document.chunk_count ??
-                                        0
-                                    }
-                                </span>
+                                            <td>
+                                                <StatusBadge
+                                                    status={
+                                                        document.status
+                                                    }
+                                                />
+                                            </td>
 
-                                <span>
-
-                                    <span
-                                        className={
-                                            `document-status ${
-                                                getStatusClass(
-                                                    document.status
-                                                )
-                                            }`
-                                        }
-                                    >
-                                        {
-                                            document.status ||
-                                            "unknown"
-                                        }
-                                    </span>
-
-                                </span>
-
-                                <span>
-                                    {formatDate(
-                                        document.updated_at
-                                    )}
-                                </span>
-
-                            </div>
-
-                        ))}
-
+                                            <td>
+                                                {formatDate(
+                                                    document.updated_at
+                                                )}
+                                            </td>
+                                        </tr>
+                                    )
+                                )}
+                            </tbody>
+                        </table>
                     </div>
-
                 )}
-
             </div>
-
         </div>
     );
 }
 
 export default Documents;
-'@ | Set-Content src\pages\Documents.jsx

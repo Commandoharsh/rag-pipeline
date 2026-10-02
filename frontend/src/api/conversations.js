@@ -5,9 +5,7 @@ export async function createConversation(
 ) {
     const response = await apiClient.post(
         "/conversations",
-        {
-            title,
-        }
+        { title }
     );
 
     return response.data.conversation;
@@ -45,9 +43,7 @@ export async function queryConversation(
 ) {
     const response = await apiClient.post(
         `/conversations/${conversationId}/query`,
-        {
-            question,
-        }
+        { question }
     );
 
     return response.data;

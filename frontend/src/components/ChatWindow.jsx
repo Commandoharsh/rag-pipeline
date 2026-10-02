@@ -1,68 +1,70 @@
+import { useEffect, useRef } from "react";
+
 import Message from "./Message";
-import Citation from "./Citation";
 
 function ChatWindow({
-    messages,
-    citations,
-    loading,
+    messages = [],
+    loading = false,
 }) {
+    const bottomRef = useRef(null);
+
+    useEffect(() => {
+        bottomRef.current?.scrollIntoView({
+            behavior: "smooth",
+        });
+    }, [messages, loading]);
+
+    if (messages.length === 0 && !loading) {
+        return (
+            <div className="chat-empty">
+                <div className="chat-empty-content">
+                    <h1>ResearchRAG</h1>
+
+                    <p>
+                        Ask questions about your
+                        indexed research documents.
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="chat-window">
-
-            <div className="messages">
-
-                {messages.length === 0 && (
-                    <div className="empty-chat">
-
-                        <h1>
-                            ResearchRAG
-                        </h1>
-
-                        <p>
-                            Ask questions about your
-                            indexed research documents.
-                        </p>
-
-                    </div>
-                )}
-
+            <div className="messages-container">
                 {messages.map((message) => (
                     <Message
                         key={message.id}
-                        message={message}
+                        role={message.role}
+                        content={message.content}
+                        citations={
+                            message.citations || []
+                        }
                     />
                 ))}
 
                 {loading && (
-                    <div className="message assistant-message">
-                        ResearchRAG is thinking...
+                    <div className="message-row message-assistant">
+                        <div className="message-icon">
+                            🤖
+                        </div>
+
+                        <div className="message-body">
+                            <div className="message-role">
+                                ResearchRAG
+                            </div>
+
+                            <div className="typing-indicator">
+                                <span />
+                                <span />
+                                <span />
+                            </div>
+                        </div>
                     </div>
                 )}
 
+                <div ref={bottomRef} />
             </div>
-
-            {citations.length > 0 && (
-
-                <div className="citations">
-
-                    <h3>
-                        Sources
-                    </h3>
-
-                    {citations.map(
-                        (citation, index) => (
-                            <Citation
-                                key={index}
-                                citation={citation}
-                            />
-                        )
-                    )}
-
-                </div>
-
-            )}
-
         </div>
     );
 }

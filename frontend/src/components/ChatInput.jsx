@@ -1,53 +1,62 @@
 import { useState } from "react";
 import { Send } from "lucide-react";
 
-function ChatInput({
-    onSend,
-    disabled,
-}) {
-
-    const [question, setQuestion] =
-        useState("");
+function ChatInput({ onSend, disabled = false }) {
+    const [message, setMessage] = useState("");
 
     async function handleSubmit(event) {
-
         event.preventDefault();
 
-        const value = question.trim();
+        const question = message.trim();
 
-        if (!value || disabled) {
+        if (!question || disabled) {
             return;
         }
 
-        setQuestion("");
+        setMessage("");
 
-        await onSend(value);
+        await onSend(question);
+    }
+
+    function handleKeyDown(event) {
+        if (
+            event.key === "Enter" &&
+            !event.shiftKey
+        ) {
+            event.preventDefault();
+
+            event.currentTarget.form?.requestSubmit();
+        }
     }
 
     return (
         <form
-            className="chat-input"
+            className="chat-input-container"
             onSubmit={handleSubmit}
         >
-
-            <input
-                value={question}
-                onChange={(event) =>
-                    setQuestion(
-                        event.target.value
-                    )
-                }
+            <textarea
+                className="chat-input"
                 placeholder="Ask ResearchRAG..."
+                value={message}
+                onChange={(event) =>
+                    setMessage(event.target.value)
+                }
+                onKeyDown={handleKeyDown}
                 disabled={disabled}
+                rows={1}
             />
 
             <button
                 type="submit"
-                disabled={disabled}
+                className="send-button"
+                disabled={
+                    disabled ||
+                    message.trim().length === 0
+                }
+                title="Send message"
             >
-                <Send size={18} />
+                <Send size={19} />
             </button>
-
         </form>
     );
 }

@@ -1,277 +1,435 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import Sidebar from "../components/Sidebar";
 import ChatWindow from "../components/ChatWindow";
 import ChatInput from "../components/ChatInput";
 
+import Documents from "./Documents";
+import Monitoring from "./Monitoring";
+
 import {
     createConversation,
-    getConversations,
     getConversation,
-    deleteConversation,
     queryConversation,
 } from "../api/conversations";
 
-import { logout } from "../api/auth";
 
-function Chat({ user, onLogout }) {
+function generateConversationTitle(question) {
+    const cleaned = question.trim();
 
-    const [
-        conversations,
-        setConversations
-    ] = useState([]);
+    if (!cleaned) {
+        return "New Conversation";
+    }
 
-    const [
-        activeConversation,
-        setActiveConversation
-    ] = useState(null);
+    if (cleaned.length <= 40) {
+        return cleaned;
+    }
 
-    const [
-        messages,
-        setMessages
-    ] = useState([]);
+    return `${cleaned.substring(0, 40)}...`;
+}
 
-    const [
-        citations,
-        setCitations
-    ] = useState([]);
 
-    const [
-        loading,
-        setLoading
-    ] = useState(false);
+function Chat({
+    user,
+    onLogout,
+}) {
+    const [conversationId, setConversationId] =
+        useState(null);
 
-    useEffect(() => {
-        loadConversations();
-    }, []);
+    const [messages, setMessages] =
+        useState([]);
 
-    async function loadConversations() {
+    const [loading, setLoading] =
+        useState(false);
+
+    const [page, setPage] =
+        useState("chat");
+
+
+    /*
+     * Load an existing conversation
+     */
+    async function loadConversation(id) {
+        if (!id) {
+            setConversationId(null);
+            setMessages([]);
+            setPage("chat");
+            return;
+        }
 
         try {
+            setLoading(true);
 
             const data =
-                await getConversations();
+                await getConversation(id);
 
-            setConversations(data);
+            setConversationId(id);
 
-            if (data.length > 0) {
-                await selectConversation(
-                    data[0].id
-                );
-            }
+            /*
+             * Backend may return messages directly
+             * or inside a conversation object.
+             */
+            const conversationMessages =
+                data.messages ||
+                data.conversation?.messages ||
+                [];
 
+            setMessages(
+                conversationMessages.map(
+                    (message) => ({
+                        id: message.id,
+                        role: message.role,
+                        content:
+                            message.content,
+                        citations:
+                            message.citations ||
+                            [],
+                    })
+                )
+            );
+
+            setPage("chat");
         } catch (error) {
-            console.error(error);
-            
+            console.error(
+                "Failed to load conversation:",
+                error
+            );
+
+            setMessages([
+                {
+                    id: `error-${Date.now()}`,
+                    role: "assistant",
+                    content:
+                        error.response?.data
+                            ?.detail ||
+                        "Failed to load this conversation.",
+                    citations: [],
+                },
+            ]);
+        } finally {
+            setLoading(false);
         }
     }
 
-    async function selectConversation(id) {
 
-        const data =
-            await getConversation(id);
-
-        setActiveConversation(id);
-
-        setMessages(
-            data.messages || []
-        );
-
-        setCitations([]);
-    }
-
-    async function handleCreateConversation() {
-
-        const conversation =
-            await createConversation();
-
-        setConversations(
-            (current) => [
-                conversation,
-                ...current
-            ]
-        );
-
-        setActiveConversation(
+    /*
+     * Create a new conversation from the sidebar
+     */
+    function handleConversationCreated(
+        conversation
+    ) {
+        setConversationId(
             conversation.id
         );
 
         setMessages([]);
 
-        setCitations([]);
+        setPage("chat");
     }
 
-    async function handleDeleteConversation(id) {
 
-        await deleteConversation(id);
-
-        const remaining =
-            conversations.filter(
-                (conversation) =>
-                    conversation.id !== id
-            );
-
-        setConversations(remaining);
-
-        if (
-            activeConversation === id
-        ) {
-
-            setActiveConversation(null);
-            setMessages([]);
-            setCitations([]);
-
-            if (remaining.length > 0) {
-                await selectConversation(
-                    remaining[0].id
-                );
-            }
-        }
+    /*
+     * Select an existing conversation
+     */
+    function handleConversationSelect(id) {
+        loadConversation(id);
     }
 
+
+    /*
+     * Send a question to ResearchRAG
+     */
     async function handleSend(question) {
-
-        if (!activeConversation) {
-
-            const conversation =
-                await createConversation(
-                    question.slice(0, 50)
-                );
-
-            setConversations(
-                (current) => [
-                    conversation,
-                    ...current
-                ]
-            );
-
-            setActiveConversation(
-                conversation.id
-            );
-
-            await sendQuestion(
-                conversation.id,
-                question
-            );
-
+        if (loading) {
             return;
         }
 
-        await sendQuestion(
-            activeConversation,
-            question
-        );
-    }
+        const cleanedQuestion =
+            question.trim();
 
-    async function sendQuestion(
-        conversationId,
-        question
-    ) {
+        if (!cleanedQuestion) {
+            return;
+        }
 
-        setLoading(true);
+        let activeConversationId =
+            conversationId;
 
         try {
+            setLoading(true);
 
-            const result =
-                await queryConversation(
-                    conversationId,
-                    question
+            /*
+             * If the user sends a question before
+             * creating a conversation, create one
+             * automatically.
+             */
+            if (!activeConversationId) {
+                const conversation =
+                    await createConversation(
+                        generateConversationTitle(
+                            cleanedQuestion
+                        )
+                    );
+
+                activeConversationId =
+                    conversation.id;
+
+                setConversationId(
+                    activeConversationId
                 );
 
-            setMessages(
-                (current) => [
-                    ...current,
-                    {
-                        id:
-                            result.messages.user.id,
-                        role: "user",
-                        content: question,
-                    },
-                    {
-                        id:
-                            result.messages.assistant.id,
-                        role: "assistant",
-                        content: result.answer,
-                    }
-                ]
-            );
+                setPage("chat");
+            }
 
-            setCitations(
-                result.citations || []
-            );
 
+            /*
+             * Show the user's message immediately.
+             */
+            const temporaryMessage = {
+                id: `user-${Date.now()}`,
+                role: "user",
+                content:
+                    cleanedQuestion,
+                citations: [],
+            };
+
+            setMessages((previous) => [
+                ...previous,
+                temporaryMessage,
+            ]);
+
+
+            /*
+             * Send the question to the
+             * conversation RAG endpoint.
+             */
+            const result =
+                await queryConversation(
+                    activeConversationId,
+                    cleanedQuestion
+                );
+
+
+            /*
+             * Add the RAG answer.
+             */
+            const assistantMessage = {
+                id:
+                    result.message_id ||
+                    `assistant-${Date.now()}`,
+
+                role: "assistant",
+
+                content:
+                    result.answer ||
+                    "ResearchRAG did not return an answer.",
+
+                citations:
+                    result.citations ||
+                    [],
+            };
+
+
+            setMessages((previous) => [
+                ...previous,
+                assistantMessage,
+            ]);
         } catch (error) {
+            console.error(
+                "RAG query failed:",
+                error
+            );
 
-            console.error(error);
+            const errorMessage = {
+                id: `error-${Date.now()}`,
 
+                role: "assistant",
+
+                content:
+                    error.response?.data
+                        ?.detail ||
+                    "Something went wrong while processing your question.",
+
+                citations: [],
+            };
+
+            setMessages((previous) => [
+                ...previous,
+                errorMessage,
+            ]);
         } finally {
-
             setLoading(false);
         }
     }
 
-    function handleLogout() {
 
-        logout();
-        onLogout();
+    /*
+     * Start a completely new conversation.
+     */
+    function handleNewConversation(
+        conversation
+    ) {
+        setConversationId(
+            conversation.id
+        );
+
+        setMessages([]);
+
+        setPage("chat");
     }
 
+
+    /*
+     * Navigate to Documents.
+     */
+    function handleDocuments() {
+        setPage("documents");
+    }
+
+
+    /*
+     * Navigate to Monitoring.
+     */
+    function handleMonitoring() {
+        setPage("monitoring");
+    }
+
+
+    /*
+     * Main application UI
+     */
     return (
-        <div className="chat-page">
+        <div className="app-shell">
+
+            {/* =========================
+                SIDEBAR
+            ========================= */}
 
             <Sidebar
-                conversations={conversations}
-                activeConversation={
-                    activeConversation
+                activeConversationId={
+                    conversationId
                 }
-                onSelect={
-                    selectConversation
+
+                onConversationSelect={
+                    handleConversationSelect
                 }
-                onCreate={
-                    handleCreateConversation
+
+                onConversationCreated={
+                    handleNewConversation
                 }
-                onDelete={
-                    handleDeleteConversation
+
+                onDocuments={
+                    handleDocuments
+                }
+
+                onMonitoring={
+                    handleMonitoring
                 }
             />
 
-            <main className="chat-main">
 
-                <header className="chat-header">
+            {/* =========================
+                MAIN APPLICATION
+            ========================= */}
 
-                    <div>
-                        <strong>
-                            ResearchRAG
-                        </strong>
+            <main className="main-area">
 
-                        <span>
-                            {user?.email}
-                        </span>
+                {/* =========================
+                    TOP BAR
+                ========================= */}
+
+                <header className="topbar">
+
+                    <div className="topbar-title">
+                        {page === "chat" &&
+                            "ResearchRAG"}
+
+                        {page ===
+                            "documents" &&
+                            "Documents"}
+
+                        {page ===
+                            "monitoring" &&
+                            "Monitoring"}
                     </div>
 
-                    <button
-                        onClick={handleLogout}
-                    >
-                        Logout
-                    </button>
+
+                    <div className="topbar-right">
+
+                        {user?.email && (
+                            <span className="user-email">
+                                {user.email}
+                            </span>
+                        )}
+
+                        <button
+                            className="logout-button"
+                            onClick={onLogout}
+                        >
+                            Logout
+                        </button>
+
+                    </div>
 
                 </header>
 
-                <ChatWindow
-                    messages={messages}
-                    citations={citations}
-                    loading={loading}
-                />
 
-                <ChatInput
-                    onSend={handleSend}
-                    disabled={loading}
-                />
+                {/* =========================
+                    CHAT PAGE
+                ========================= */}
+
+                {page === "chat" && (
+                    <>
+                        <ChatWindow
+                            messages={
+                                messages
+                            }
+
+                            loading={
+                                loading
+                            }
+                        />
+
+                        <div className="chat-input-wrapper">
+
+                            <ChatInput
+                                onSend={
+                                    handleSend
+                                }
+
+                                disabled={
+                                    loading
+                                }
+                            />
+
+                        </div>
+                    </>
+                )}
+
+
+                {/* =========================
+                    DOCUMENTS PAGE
+                ========================= */}
+
+                {page ===
+                    "documents" && (
+                    <Documents />
+                )}
+
+
+                {/* =========================
+                    MONITORING PAGE
+                ========================= */}
+
+                {page ===
+                    "monitoring" && (
+                    <Monitoring />
+                )}
 
             </main>
 
         </div>
     );
 }
+
 
 export default Chat;

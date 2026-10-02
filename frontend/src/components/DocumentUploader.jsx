@@ -1,202 +1,174 @@
-@'
 import { useRef, useState } from "react";
-import { Upload, FileText, CheckCircle, AlertCircle } from "lucide-react";
+import {
+    Upload,
+    FileText,
+} from "lucide-react";
+
 import { uploadDocument } from "../api/upload";
 
-function DocumentUploader({ onUploaded }) {
+function DocumentUploader({
+    onUploaded,
+}) {
+    const inputRef = useRef(null);
 
-    const fileInputRef = useRef(null);
+    const [file, setFile] =
+        useState(null);
 
-    const [file, setFile] = useState(null);
-    const [uploading, setUploading] = useState(false);
-    const [status, setStatus] = useState("");
-    const [error, setError] = useState("");
+    const [uploading, setUploading] =
+        useState(false);
+
+    const [error, setError] =
+        useState("");
+
+    const [success, setSuccess] =
+        useState("");
 
     function handleFileChange(event) {
-
-        const selectedFile =
+        const selected =
             event.target.files?.[0];
 
-        if (!selectedFile) {
+        if (!selected) {
             return;
         }
 
         setError("");
-        setStatus("");
+        setSuccess("");
 
         if (
-            selectedFile.type !==
-            "application/pdf"
+            selected.type !==
+                "application/pdf" &&
+            !selected.name
+                .toLowerCase()
+                .endsWith(".pdf")
         ) {
-            setFile(null);
             setError(
                 "Only PDF files are supported."
             );
+
             return;
         }
 
         const maxSize =
             25 * 1024 * 1024;
 
-        if (selectedFile.size > maxSize) {
-            setFile(null);
+        if (selected.size > maxSize) {
             setError(
                 "File size must be less than 25 MB."
             );
+
             return;
         }
 
-        setFile(selectedFile);
+        setFile(selected);
     }
 
     async function handleUpload() {
-
         if (!file || uploading) {
             return;
         }
 
-        setUploading(true);
-        setError("");
-        setStatus("Uploading document...");
-
         try {
+            setUploading(true);
+            setError("");
+            setSuccess("");
 
-            const result =
-                await uploadDocument(file);
+            await uploadDocument(file);
 
-            setStatus(
-                "Document indexed successfully."
+            setSuccess(
+                `${file.name} uploaded successfully.`
             );
 
             setFile(null);
 
-            if (fileInputRef.current) {
-                fileInputRef.current.value = "";
+            if (inputRef.current) {
+                inputRef.current.value =
+                    "";
             }
 
             if (onUploaded) {
-                onUploaded(result);
+                await onUploaded();
             }
-
         } catch (error) {
-
-            console.error(
-                "Document upload failed:",
-                error
-            );
+            console.error(error);
 
             setError(
                 error.response?.data?.detail ||
-                "Document upload failed."
+                "Upload failed."
             );
-
-            setStatus("");
-
         } finally {
-
             setUploading(false);
         }
     }
 
     return (
-        <div className="document-uploader">
+        <div className="upload-card">
+            <div className="upload-icon">
+                <Upload size={24} />
+            </div>
 
-            <div
-                className="upload-area"
-                onClick={() =>
-                    fileInputRef.current?.click()
-                }
-            >
-
-                <Upload size={32} />
-
+            <div className="upload-content">
                 <h3>
-                    Upload a research PDF
+                    Upload Research Document
                 </h3>
 
                 <p>
-                    Click to select a PDF
+                    Upload a PDF to add it to
+                    your ResearchRAG knowledge
+                    base.
                 </p>
 
-                <small>
-                    Maximum file size: 25 MB
-                </small>
+                <div className="upload-controls">
+                    <input
+                        ref={inputRef}
+                        type="file"
+                        accept=".pdf,application/pdf"
+                        onChange={
+                            handleFileChange
+                        }
+                    />
 
-                <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="application/pdf,.pdf"
-                    onChange={handleFileChange}
-                    hidden
-                />
+                    {file && (
+                        <div className="selected-file">
+                            <FileText
+                                size={17}
+                            />
 
-            </div>
-
-            {file && (
-
-                <div className="selected-file">
-
-                    <FileText size={20} />
-
-                    <div className="file-info">
-
-                        <strong>
-                            {file.name}
-                        </strong>
-
-                        <span>
-                            {(
-                                file.size /
-                                (1024 * 1024)
-                            ).toFixed(2)} MB
-                        </span>
-
-                    </div>
+                            <span>
+                                {file.name}
+                            </span>
+                        </div>
+                    )}
 
                     <button
-                        onClick={handleUpload}
-                        disabled={uploading}
+                        className="upload-button"
+                        onClick={
+                            handleUpload
+                        }
+                        disabled={
+                            !file ||
+                            uploading
+                        }
                     >
                         {uploading
-                            ? "Processing..."
-                            : "Upload"}
+                            ? "Uploading..."
+                            : "Upload PDF"}
                     </button>
-
                 </div>
 
-            )}
-
-            {status && (
-
-                <div className="upload-success">
-
-                    <CheckCircle size={18} />
-
-                    <span>
-                        {status}
-                    </span>
-
-                </div>
-
-            )}
-
-            {error && (
-
-                <div className="upload-error">
-
-                    <AlertCircle size={18} />
-
-                    <span>
+                {error && (
+                    <div className="upload-error">
                         {error}
-                    </span>
+                    </div>
+                )}
 
-                </div>
-
-            )}
-
+                {success && (
+                    <div className="upload-success">
+                        {success}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
 
 export default DocumentUploader;
-'@ | Set-Content src\components\DocumentUploader.jsx

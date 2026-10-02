@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Chat from "./pages/Chat";
 
-import { getToken } from "./api/auth";
+import {
+    getToken,
+    logout,
+} from "./api/auth";
 
 function App() {
     const [authenticated, setAuthenticated] =
@@ -15,6 +18,12 @@ function App() {
 
     const [user, setUser] =
         useState(null);
+
+    useEffect(() => {
+        if (!getToken()) {
+            setAuthenticated(false);
+        }
+    }, []);
 
     if (!authenticated) {
         if (showRegister) {
@@ -47,6 +56,7 @@ function App() {
         <Chat
             user={user}
             onLogout={() => {
+                logout();
                 setAuthenticated(false);
                 setUser(null);
             }}
