@@ -1,0 +1,265 @@
+{
+    "dataset_size": 3,
+    "retrieval": {
+        "semantic": {
+            "cases": [
+                {
+                    "id": "rag_001",
+                    "question": "What is retrieval augmented generation?",
+                    "retrieved_chunks": [
+                        "rag_test.pdf_1_0",
+                        "research.pdf_1_0",
+                        "healthcare.pdf_1_0",
+                        "ai.pdf_3_0",
+                        "astronomy.pdf_2_0"
+                    ],
+                    "metrics": {
+                        "recall@1": 0.0,
+                        "recall@3": 0.0,
+                        "recall@5": 0.0,
+                        "mrr": 0.0,
+                        "ndcg@5": 0.0
+                    }
+                },
+                {
+                    "id": "ml_001",
+                    "question": "How does machine learning help healthcare?",
+                    "retrieved_chunks": [
+                        "healthcare.pdf_1_0",
+                        "research.pdf_1_0",
+                        "ai.pdf_3_0",
+                        "rag_test.pdf_1_0",
+                        "astronomy.pdf_2_0"
+                    ],
+                    "metrics": {
+                        "recall@1": 0.0,
+                        "recall@3": 0.0,
+                        "recall@5": 0.0,
+                        "mrr": 0.0,
+                        "ndcg@5": 0.0
+                    }
+                },
+                {
+                    "id": "transformer_001",
+                    "question": "What is transformer attention?",
+                    "retrieved_chunks": [
+                        "research.pdf_1_0",
+                        "ai.pdf_3_0",
+                        "healthcare.pdf_1_0",
+                        "rag_test.pdf_1_0",
+                        "astronomy.pdf_2_0"
+                    ],
+                    "metrics": {
+                        "recall@1": 0.0,
+                        "recall@3": 0.0,
+                        "recall@5": 0.0,
+                        "mrr": 0.0,
+                        "ndcg@5": 0.0
+                    }
+                }
+            ],
+            "metrics": {
+                "recall@1": 0.0,
+                "recall@3": 0.0,
+                "recall@5": 0.0,
+                "mrr": 0.0,
+                "ndcg@5": 0.0
+            }
+        },
+        "bm25": {
+            "cases": [
+                {
+                    "id": "rag_001",
+                    "question": "What is retrieval augmented generation?",
+                    "retrieved_chunks": [
+                        "research.pdf_1_0",
+                        "rag_test.pdf_1_0",
+                        "healthcare.pdf_1_0",
+                        "ai.pdf_3_0",
+                        "astronomy.pdf_2_0"
+                    ],
+                    "metrics": {
+                        "recall@1": 0.0,
+                        "recall@3": 0.0,
+                        "recall@5": 0.0,
+                        "mrr": 0.0,
+                        "ndcg@5": 0.0
+                    }
+                },
+                {
+                    "id": "ml_001",
+                    "question": "How does machine learning help healthcare?",
+                    "retrieved_chunks": [
+                        "healthcare.pdf_1_0",
+                        "research.pdf_1_0",
+                        "ai.pdf_3_0",
+                        "rag_test.pdf_1_0",
+                        "astronomy.pdf_2_0"
+                    ],
+                    "metrics": {
+                        "recall@1": 0.0,
+                        "recall@3": 0.0,
+                        "recall@5": 0.0,
+                        "mrr": 0.0,
+                        "ndcg@5": 0.0
+                    }
+                },
+                {
+                    "id": "transformer_001",
+                    "question": "What is transformer attention?",
+                    "retrieved_chunks": [
+                        "healthcare.pdf_1_0",
+                        "research.pdf_1_0",
+                        "rag_test.pdf_1_0",
+                        "ai.pdf_3_0",
+                        "astronomy.pdf_2_0"
+                    ],
+                    "metrics": {
+                        "recall@1": 0.0,
+                        "recall@3": 0.0,
+                        "recall@5": 0.0,
+                        "mrr": 0.0,
+                        "ndcg@5": 0.0
+                    }
+                }
+            ],
+            "metrics": {
+                "recall@1": 0.0,
+                "recall@3": 0.0,
+                "recall@5": 0.0,
+                "mrr": 0.0,
+                "ndcg@5": 0.0
+            }
+        },
+        "hybrid": {
+            "cases": [
+                {
+                    "id": "rag_001",
+                    "question": "What is retrieval augmented generation?",
+                    "retrieved_chunks": [
+                        "rag_test.pdf_1_0",
+                        "research.pdf_1_0",
+                        "healthcare.pdf_1_0",
+                        "ai.pdf_3_0",
+                        "astronomy.pdf_2_0"
+                    ],
+                    "metrics": {
+                        "recall@1": 0.0,
+                        "recall@3": 0.0,
+                        "recall@5": 0.0,
+                        "mrr": 0.0,
+                        "ndcg@5": 0.0
+                    }
+                },
+                {
+                    "id": "ml_001",
+                    "question": "How does machine learning help healthcare?",
+                    "retrieved_chunks": [
+                        "healthcare.pdf_1_0",
+                        "research.pdf_1_0",
+                        "ai.pdf_3_0",
+                        "rag_test.pdf_1_0",
+                        "astronomy.pdf_2_0"
+                    ],
+                    "metrics": {
+                        "recall@1": 0.0,
+                        "recall@3": 0.0,
+                        "recall@5": 0.0,
+                        "mrr": 0.0,
+                        "ndcg@5": 0.0
+                    }
+                },
+                {
+                    "id": "transformer_001",
+                    "question": "What is transformer attention?",
+                    "retrieved_chunks": [
+                        "research.pdf_1_0",
+                        "healthcare.pdf_1_0",
+                        "ai.pdf_3_0",
+                        "rag_test.pdf_1_0",
+                        "astronomy.pdf_2_0"
+                    ],
+                    "metrics": {
+                        "recall@1": 0.0,
+                        "recall@3": 0.0,
+                        "recall@5": 0.0,
+                        "mrr": 0.0,
+                        "ndcg@5": 0.0
+                    }
+                }
+            ],
+            "metrics": {
+                "recall@1": 0.0,
+                "recall@3": 0.0,
+                "recall@5": 0.0,
+                "mrr": 0.0,
+                "ndcg@5": 0.0
+            }
+        },
+        "hybrid_reranker": {
+            "cases": [
+                {
+                    "id": "rag_001",
+                    "question": "What is retrieval augmented generation?",
+                    "retrieved_chunks": [
+                        "rag_test.pdf_1_0",
+                        "research.pdf_1_0",
+                        "healthcare.pdf_1_0",
+                        "ai.pdf_3_0",
+                        "astronomy.pdf_2_0"
+                    ],
+                    "metrics": {
+                        "recall@1": 0.0,
+                        "recall@3": 0.0,
+                        "recall@5": 0.0,
+                        "mrr": 0.0,
+                        "ndcg@5": 0.0
+                    }
+                },
+                {
+                    "id": "ml_001",
+                    "question": "How does machine learning help healthcare?",
+                    "retrieved_chunks": [
+                        "research.pdf_1_0",
+                        "healthcare.pdf_1_0",
+                        "ai.pdf_3_0",
+                        "astronomy.pdf_2_0",
+                        "rag_test.pdf_1_0"
+                    ],
+                    "metrics": {
+                        "recall@1": 0.0,
+                        "recall@3": 0.0,
+                        "recall@5": 0.0,
+                        "mrr": 0.0,
+                        "ndcg@5": 0.0
+                    }
+                },
+                {
+                    "id": "transformer_001",
+                    "question": "What is transformer attention?",
+                    "retrieved_chunks": [
+                        "research.pdf_1_0",
+                        "healthcare.pdf_1_0",
+                        "rag_test.pdf_1_0",
+                        "ai.pdf_3_0",
+                        "astronomy.pdf_2_0"
+                    ],
+                    "metrics": {
+                        "recall@1": 0.0,
+                        "recall@3": 0.0,
+                        "recall@5": 0.0,
+                        "mrr": 0.0,
+                        "ndcg@5": 0.0
+                    }
+                }
+            ],
+            "metrics": {
+                "recall@1": 0.0,
+                "recall@3": 0.0,
+                "recall@5": 0.0,
+                "mrr": 0.0,
+                "ndcg@5": 0.0
+            }
+        }
+    }
+}

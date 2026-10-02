@@ -1,27 +1,29 @@
+from pathlib import Path
+
 from reportlab.pdfgen import canvas
 
+from backend.rag.embeddings.embedding_model import EmbeddingModel
 from backend.rag.indexing.indexing_pipeline import IndexingPipeline
+from backend.rag.retrieval.bm25_retriever import BM25Retriever
+from backend.rag.retrieval.vector_store import VectorStore
 
 
-def create_test_pdf(file_path):
+def create_test_pdf(file_path: Path):
+
     pdf = canvas.Canvas(str(file_path))
 
     pdf.drawString(
         100,
         750,
-        "Artificial intelligence is transforming healthcare."
+        "Retrieval augmented generation combines "
+        "information retrieval with language models."
     )
 
     pdf.drawString(
         100,
         730,
-        "Machine learning can assist doctors in medical diagnosis."
-    )
-
-    pdf.drawString(
-        100,
-        710,
-        "Retrieval augmented generation combines retrieval with language models."
+        "RAG systems retrieve relevant documents "
+        "before generating an answer."
     )
 
     pdf.save()
@@ -29,18 +31,40 @@ def create_test_pdf(file_path):
 
 def test_indexing_pipeline(tmp_path):
 
-    pdf_path = tmp_path / "research.pdf"
+    pdf_path = tmp_path / "test.pdf"
 
     create_test_pdf(pdf_path)
 
-    pipeline = IndexingPipeline(
-        chunk_size=200,
-        chunk_overlap=30
+    vector_store = VectorStore(
+        collection_name="test_collection",
+        vector_size=384,
+        storage_path=str(
+            tmp_path / "qdrant"
+        )
     )
 
-    result = pipeline.index_pdf(str(pdf_path))
+    embedding_model = EmbeddingModel()
 
-    assert result["file"] == "research.pdf"
+    bm25_retriever = BM25Retriever()
+
+    pipeline = IndexingPipeline(
+        embedding_model=embedding_model,
+        vector_store=vector_store,
+        bm25_retriever=bm25_retriever
+    )
+
+    result = pipeline.index_pdf(
+        str(pdf_path)
+    )
+
+    assert result["file"] == "test.pdf"
+
     assert result["documents"] == 1
+
     assert result["chunks"] > 0
+
+    assert result["total_indexed_chunks"] > 0
+
     assert result["embedding_dimension"] == 384
+
+    vector_store.close()
